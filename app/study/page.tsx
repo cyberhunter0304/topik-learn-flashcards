@@ -130,8 +130,9 @@ function StudyInner() {
   }
 
   if (!card) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cream)' }}>
-      <p style={{ color: 'var(--muted)' }}>Loading…</p>
+    <div className="study-loading">
+      <span>Loading</span>
+      <span className="study-loading-dots">…</span>
     </div>
   )
 
@@ -139,207 +140,190 @@ function StudyInner() {
   const syllables = syllabify(card.korean)
   const rom       = syllabifyRoman(card.korean)
   const progress  = deck.length > 0 ? ((index + 1) / deck.length) * 100 : 0
+  const knownCount = known.size
+
+  const modeLabel: Record<string, string> = {
+    order: '📖 In Order',
+    shuffle: '🔀 Shuffle',
+    review: '📚 Review',
+  }
 
   return (
-    <main className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: 'var(--cream)' }}>
+    <main className="study-main">
 
-      {/* Floating bees and sunflowers decoration */}
-      {[
-        { top: '8%',  left: '5%',  dur: '14s', delay: '-2s'  },
-        { top: '20%', left: '88%', dur: '18s', delay: '-6s'  },
-        { top: '55%', left: '92%', dur: '22s', delay: '-10s' },
-        { top: '75%', left: '3%',  dur: '16s', delay: '-4s'  },
-        { top: '40%', left: '50%', dur: '25s', delay: '-8s'  },
-      ].map((b, i) => (
-        <div key={`bee-${i}`} className="bg-bee" style={{
-          top: b.top, left: b.left,
-          animationDuration: b.dur, animationDelay: b.delay,
-        }}>🐝</div>
-      ))}
-
-      {/* Decorative sunflowers */}
-      {[
-        { top: '12%', left: '85%', size: '3rem', opacity: '0.2' },
-        { top: '68%', left: '8%', size: '2.5rem', opacity: '0.18' },
-      ].map((s, i) => (
-        <div
-          key={`sun-${i}`}
-          style={{
-            position: 'fixed',
-            top: s.top,
-            left: s.left,
-            fontSize: s.size,
-            opacity: s.opacity,
-            pointerEvents: 'none',
-            zIndex: 1,
-            userSelect: 'none'
-          }}
-        >
-          🌻
-        </div>
+      {/* Floating petals */}
+      {['🌸','✨','🌼','💛','🌺','⭐'].map((p, i) => (
+        <span key={i} className="float-petal" style={{
+          left: `${5 + i * 17}%`,
+          animationDelay: `${i * -3.1}s`,
+          animationDuration: `${18 + i * 2.5}s`,
+          fontSize: `${0.9 + (i % 3) * 0.35}rem`,
+          opacity: 0.14 + (i % 3) * 0.04
+        }}>{p}</span>
       ))}
 
       {/* ── Top bar ── */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-5 pb-3">
-        <button onClick={() => router.push('/')} className="btn-secondary" style={{ fontSize: '0.9rem', padding: '0.55em 1.1em' }}>
+      <div className="study-topbar">
+        <button className="study-back-btn" onClick={() => router.push('/')}>
           ← Home
         </button>
-        <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--muted)' }}>
-          {index + 1} <span style={{ color: 'var(--honey)' }}>/</span> {deck.length}
-        </span>
-        <button onClick={markKnown}
-          className={isKnown ? 'btn-primary' : 'btn-secondary'}
-          style={{ fontSize: '0.9rem', padding: '0.55em 1.1em' }}>
+
+        <div className="study-mode-badge">{modeLabel[mode] ?? mode}</div>
+
+        <button
+          className={`study-known-btn ${isKnown ? 'study-known-btn--on' : ''}`}
+          onClick={markKnown}
+        >
           {isKnown ? '✓ Known' : 'Mark Known'}
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="relative z-10 mx-5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(212,160,23,0.20)' }}>
-        <div className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--honey), var(--gold))' }} />
+      {/* ── Progress bar ── */}
+      <div className="study-progress-wrap">
+        <div className="study-progress-bar" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* ── Card ── */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-5 py-4">
+      {/* ── Counter strip ── */}
+      <div className="study-counter-strip">
+        <span className="study-counter-num">
+          {index + 1}<span className="study-counter-sep">/</span>{deck.length}
+        </span>
+        <span className="study-counter-known">
+          {knownCount} known ✦ {deck.length - knownCount} to go
+        </span>
+      </div>
+
+      {/* ── Card area ── */}
+      <div className="study-card-area">
         <div
           key={animKey}
-          className="slide-in card-scene"
-          style={{ maxWidth: '480px', width: '100%' }}
+          className="study-card-scene slide-in"
           onClick={flip}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {/* Fixed height card */}
-          <div className={`card-inner ${flipped ? 'flipped' : ''}`} style={{ height: '300px' }}>
+          <div className={`study-card-inner ${flipped ? 'flipped' : ''}`}>
 
             {/* Front — English */}
-            <div className="card-face flex flex-col items-center justify-center px-8 py-6 select-none"
-              style={{ background: 'var(--warm-white)', boxShadow: 'var(--card-shadow)', border: '1px solid rgba(212,160,23,0.15)', cursor: 'pointer' }}>
-              <span className="text-xs font-bold mb-4 tracking-widest uppercase" style={{ color: 'var(--honey)' }}>
-                #{card.id}
-              </span>
-              <p className="text-center font-bold leading-snug w-full px-2"
-                style={{
-                  color: 'var(--charcoal)',
-                  fontSize: card.english.length > 25 ? '1.25rem' : card.english.length > 15 ? '1.65rem' : '2.2rem',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word',
-                }}>
+            <div className="study-card-face study-card-front">
+              <span className="study-card-id">#{card.id}</span>
+              <p className="study-card-english" style={{
+                fontSize: card.english.length > 25 ? '1.3rem'
+                        : card.english.length > 15 ? '1.75rem'
+                        : '2.3rem'
+              }}>
                 {card.english}
               </p>
-              <span className="mt-5 text-xs font-medium" style={{ color: 'var(--muted)' }}>
-                tap or press <kbd className="shortcut-key">Enter</kbd> to reveal
-              </span>
+              <span className="study-card-hint">tap to reveal 🌸</span>
             </div>
 
             {/* Back — Korean */}
-            <div className="card-face card-back flex flex-col items-center justify-center px-8 py-5 select-none"
-              style={{ background: 'var(--warm-white)', boxShadow: 'var(--card-shadow)', border: '1px solid rgba(212,160,23,0.15)', cursor: 'pointer' }}>
-              <span className="text-xs font-bold mb-1 tracking-widest uppercase" style={{ color: 'var(--honey)' }}>
-                #{card.id}
-              </span>
+            <div className="study-card-face study-card-back">
+              <span className="study-card-id">#{card.id}</span>
 
-              <p className="font-bold text-center"
-                style={{
-                  color: 'var(--charcoal)',
-                  fontSize: card.korean.length > 5 ? '2.4rem' : '3.2rem',
-                  lineHeight: 1.15,
-                }}>
+              <p className="study-card-korean" style={{
+                fontSize: card.korean.length > 5 ? '2.6rem' : '3.4rem'
+              }}>
                 {card.korean}
               </p>
 
               {/* Syllable pop-in */}
-              <div className="flex flex-wrap justify-center gap-1 mt-1 min-h-6">
+              <div className="study-syllables">
                 {sylVisible && syllables.map((syl, i) => (
                   syl === ' '
                     ? <span key={i} className="w-2" />
-                    : <span key={i} className="syllable-char text-base font-semibold"
-                        style={{ color: 'var(--gold)', animationDelay: `${i * 80}ms` }}>
+                    : <span key={i} className="syllable-char study-syl"
+                        style={{ animationDelay: `${i * 80}ms` }}>
                         {syl}
                       </span>
                 ))}
               </div>
 
-              <div className="w-10 h-px my-2" style={{ background: 'rgba(212,160,23,0.3)' }} />
+              <div className="study-divider" />
+              <p className="study-roman">{rom}</p>
 
-              <p className="text-sm font-medium mb-3" style={{ color: 'var(--muted)' }}>{rom}</p>
-
-              {/* Replay button */}
               <button
+                className="study-replay-btn"
                 onClick={e => { e.stopPropagation(); replay() }}
-                className="btn-icon"
-                title="Replay pronunciation (R)">
-                <span>🔊</span>
-                <span>{slowMode ? 'Slow replay' : 'Replay'}</span>
+                title="Replay (R)"
+              >
+                🔊 {slowMode ? 'Slow replay' : 'Replay'}
               </button>
             </div>
           </div>
         </div>
 
-        <p className="mt-4 text-xs text-center font-medium" style={{ color: 'var(--muted)' }}>
-          {flipped ? 'swipe or use ← → to navigate' : 'tap · Space · Enter to flip'}
+        <p className="study-swipe-hint">
+          {flipped ? '← swipe or arrow keys to navigate →' : 'tap · Space · Enter to flip'}
         </p>
       </div>
 
       {/* ── Bottom nav ── */}
-      <div className="relative z-10 flex items-center gap-3 px-5 pb-5">
+      <div className="study-nav-row">
         <button
+          className="study-nav-btn"
           onClick={() => goTo(index - 1)}
           disabled={index === 0}
-          className="btn-nav"
-          aria-label="Previous card">
-          ←
-        </button>
-        <button onClick={flip} className="btn-primary" style={{ flex: 2 }}>
+          aria-label="Previous"
+        >←</button>
+
+        <button className="study-reveal-btn" onClick={flip}>
           {flipped ? 'Hide' : 'Reveal'}
         </button>
+
         <button
+          className="study-nav-btn"
           onClick={() => goTo(index + 1)}
           disabled={index === deck.length - 1}
-          className="btn-nav"
-          aria-label="Next card">
-          →
-        </button>
+          aria-label="Next"
+        >→</button>
       </div>
 
-      {/* ── Toggles row ── */}
-      <div className="relative z-10 flex items-center justify-center gap-3 pb-6 px-5">
-        <button onClick={() => setSlowMode(v => !v)} className={slowMode ? 'btn-toggle-on' : 'btn-toggle'}>
+      {/* ── Toggles ── */}
+      <div className="study-toggles-row">
+        <button
+          className={`study-toggle ${slowMode ? 'study-toggle--on' : ''}`}
+          onClick={() => setSlowMode(v => !v)}
+        >
           🐢 {slowMode ? 'Slow' : 'Normal'}
         </button>
-        <button onClick={() => setMuted(v => !v)} className={muted ? 'btn-toggle-muted' : 'btn-toggle'}>
+
+        <button
+          className={`study-toggle ${muted ? 'study-toggle--muted' : ''}`}
+          onClick={() => setMuted(v => !v)}
+        >
           {muted ? '🔇 Muted' : '🔊 Sound'}
         </button>
-        <button onClick={() => setLegendOpen(v => !v)} className={legendOpen ? 'btn-toggle-on' : 'btn-toggle'}>
+
+        <button
+          className={`study-toggle ${legendOpen ? 'study-toggle--on' : ''}`}
+          onClick={() => setLegendOpen(v => !v)}
+        >
           ⌨ Keys
         </button>
       </div>
 
       {/* ── Shortcut legend ── */}
       {legendOpen && (
-        <div className="shortcut-legend fixed bottom-24 right-5 z-50 p-4 w-60 fade-in">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-bold" style={{ color: 'var(--charcoal)' }}>⌨ Shortcuts</span>
-            <button onClick={() => setLegendOpen(false)}
-              style={{ color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer' }}>✕</button>
+        <div className="study-legend fade-in">
+          <div className="study-legend-header">
+            <span>⌨ Shortcuts</span>
+            <button onClick={() => setLegendOpen(false)}>✕</button>
           </div>
-          <div className="flex flex-col gap-2">
-            {[
-              { key: 'Enter / Space', label: 'Flip card' },
-              { key: '← →',          label: 'Prev / Next' },
-              { key: 'R',            label: 'Replay audio' },
-              { key: 'K',            label: 'Toggle Known' },
-              { key: 'M',            label: 'Mute / Unmute' },
-              { key: 'S',            label: 'Slow / Normal' },
-              { key: '?',            label: 'This panel' },
-            ].map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-between gap-2">
-                <span className="text-xs" style={{ color: 'var(--charcoal)', opacity: 0.72 }}>{label}</span>
-                <kbd className="shortcut-key">{key}</kbd>
-              </div>
-            ))}
-          </div>
+          {[
+            { key: 'Enter / Space', label: 'Flip card' },
+            { key: '← →',          label: 'Prev / Next' },
+            { key: 'R',            label: 'Replay audio' },
+            { key: 'K',            label: 'Toggle Known' },
+            { key: 'M',            label: 'Mute / Unmute' },
+            { key: 'S',            label: 'Slow / Normal' },
+            { key: '?',            label: 'This panel' },
+          ].map(({ key, label }) => (
+            <div key={key} className="study-legend-row">
+              <span>{label}</span>
+              <kbd className="shortcut-key">{key}</kbd>
+            </div>
+          ))}
         </div>
       )}
     </main>
