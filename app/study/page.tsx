@@ -5,6 +5,7 @@ import vocab from '@/data/vocab.json'
 import { romanize, syllabify } from '@/lib/romanize'
 import { speakKorean } from '@/lib/speech'
 import { getKnown, toggleKnown, saveProgress } from '@/lib/storage'
+import BeeAssist from '@/components/BeeAssist'
 
 type Card = { id: number; korean: string; english: string }
 
@@ -152,7 +153,7 @@ function StudyInner() {
     <main className="study-main">
 
       {/* Floating petals */}
-      {['🌸','✨','🌼','💛','🌺','⭐'].map((p, i) => (
+      {['🌸','🌙','✨','🌼','💛','🌺','⭐','🐝','☀️','🌻','🐝',].map((p, i) => (
         <span key={i} className="float-petal" style={{
           left: `${5 + i * 17}%`,
           animationDelay: `${i * -3.1}s`,
@@ -249,6 +250,8 @@ function StudyInner() {
               >
                 🔊 {slowMode ? 'Slow replay' : 'Replay'}
               </button>
+
+              <BeeAssist korean={card.korean} english={card.english} />
             </div>
           </div>
         </div>

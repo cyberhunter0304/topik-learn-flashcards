@@ -928,3 +928,304 @@ body {
   border-color: rgba(180,140,200,0.6) !important;
   background: #fdf8ff;
 }
+
+/* ── BeeAssist ── */
+.bee-assist-wrap {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Bee button */
+.bee-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(253,232,160,0.9);
+  box-shadow: 0 4px 18px rgba(212,160,23,0.3), 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  animation: bee-hover 3s ease-in-out infinite;
+}
+.bee-btn:hover, .bee-btn--active {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212,160,23,0.4);
+  animation: none;
+}
+.bee-btn:active { transform: scale(0.95); }
+
+@keyframes bee-hover {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+
+.bee-img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Speech bubble */
+.bee-bubble {
+  position: absolute;
+  bottom: 76px;
+  right: 0;
+  width: 210px;
+  background: #fffdf5;
+  border: 2px solid #f9c74f;
+  border-radius: 18px 18px 4px 18px;
+  padding: 0.85rem 1rem 0.75rem;
+  box-shadow: 0 6px 24px rgba(212,160,23,0.2);
+  animation: bubble-in 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes bubble-in {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.bee-bubble-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3d1a00;
+  margin: 0 0 0.65rem;
+  line-height: 1.4;
+}
+.bee-bubble-actions { display: flex; gap: 0.45rem; }
+.bee-bubble-yes {
+  flex: 1;
+  padding: 0.38rem 0;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(135deg, #f9c74f, #f4a261);
+  color: #3d1a00;
+  font-weight: 800;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.13s, box-shadow 0.13s;
+  box-shadow: 0 2px 8px rgba(212,160,23,0.25);
+}
+.bee-bubble-yes:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,160,23,0.35); }
+.bee-bubble-no {
+  flex: 1;
+  padding: 0.38rem 0;
+  border-radius: 20px;
+  border: 1.5px solid rgba(212,160,23,0.35);
+  background: transparent;
+  color: #8c7a6b;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.bee-bubble-no:hover { border-color: rgba(212,160,23,0.6); }
+
+/* Panel */
+.bee-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-height: 75vh;
+  background: #fffdf7;
+  border-top: 2px solid #f9c74f;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(212,160,23,0.18);
+  overflow-y: auto;
+  z-index: 200;
+  animation: panel-up 0.3s cubic-bezier(0.34,1.2,0.64,1);
+}
+@keyframes panel-up {
+  from { transform: translateY(100%); opacity: 0.5; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.bee-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem 0.75rem;
+  border-bottom: 1px solid rgba(249,199,79,0.25);
+  position: sticky;
+  top: 0;
+  background: #fffdf7;
+  z-index: 2;
+}
+.bee-panel-img {
+  width: 40px; height: 40px;
+  object-fit: contain; flex-shrink: 0;
+}
+.bee-panel-title {
+  display: block;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #3d1a00;
+}
+.bee-panel-word {
+  display: block;
+  font-size: 0.72rem;
+  color: #8c7a6b;
+  margin-top: 1px;
+  font-style: italic;
+}
+.bee-panel-close {
+  margin-left: auto;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(253,232,160,0.6);
+  color: #5a2d00;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bee-panel-close:hover { background: rgba(249,199,79,0.6); }
+
+/* Loading */
+.bee-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2rem 1.2rem;
+  color: #8c7a6b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.bee-loading-bee {
+  font-size: 1.4rem;
+  animation: bee-wobble 1s ease-in-out infinite alternate;
+  display: inline-block;
+}
+@keyframes bee-wobble {
+  from { transform: translateX(-4px) rotate(-10deg); }
+  to   { transform: translateX(4px)  rotate(10deg); }
+}
+
+/* Error */
+.bee-error {
+  padding: 1.5rem 1.2rem;
+  color: #c0392b;
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+.bee-error button {
+  margin-top: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1.5px solid #e74c3c;
+  background: transparent;
+  color: #c0392b;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* Content */
+.bee-content { padding: 0.25rem 1.2rem 2rem; }
+
+.bee-section { margin-top: 1.1rem; }
+
+.bee-section-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #d4a017;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+
+.bee-section-body {
+  font-size: 0.85rem;
+  color: #3d1a00;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Example sentences */
+.bee-example {
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(253,232,160,0.25);
+  border-radius: 12px;
+  border-left: 3px solid rgba(249,199,79,0.5);
+}
+.bee-example-korean {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2c1a0e;
+  margin: 0 0 0.15rem;
+}
+.bee-example-roman {
+  font-size: 0.78rem;
+  color: #b8926a;
+  margin: 0 0 0.2rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+.bee-example-english {
+  font-size: 0.8rem;
+  color: #6b5a4e;
+  margin: 0;
+}
+
+/* Pitfall */
+.bee-pitfall {
+  background: rgba(253,232,160,0.4);
+  border-left: 3px solid #f9c74f;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Related word chips — clickable */
+.bee-related {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.bee-related-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(253,232,160,0.3);
+  border: 1.5px solid rgba(212,160,23,0.25);
+  width: 100%;
+}
+
+.bee-related-korean {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2c1a0e;
+  min-width: 40px;
+}
+.bee-related-roman {
+  font-size: 0.75rem;
+  color: #b8926a;
+  font-style: italic;
+  flex: 1;
+}
+.bee-related-english {
+  font-size: 0.78rem;
+  color: #6b5a4e;
+  font-weight: 600;
+}
+
+
+
+.bee-related-sep {
+  color: rgba(180, 130, 60, 0.5);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
