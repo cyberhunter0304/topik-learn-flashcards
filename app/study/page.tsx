@@ -49,8 +49,11 @@ function StudyInner() {
   const [muted, setMuted]           = useState(false)
   const [legendOpen, setLegendOpen] = useState(false)
 
-  const touchStartX = useRef(0)
-  const touchStartY = useRef(0)
+  const touchStartX   = useRef(0)
+  const touchStartY   = useRef(0)
+  const touchStartTime = useRef(0)
+  // Track if touch moved significantly — prevents onClick from also firing on mobile
+  const touchMoved    = useRef(false)
 
   useEffect(() => {
     const allKnown = getKnown()
@@ -117,17 +120,42 @@ function StudyInner() {
   }, [flip, goTo, index, markKnown, replay])
 
   const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
+    touchStartX.current    = e.touches[0].clientX
+    touchStartY.current    = e.touches[0].clientY
+    touchStartTime.current = Date.now()
+    touchMoved.current     = false
   }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+    if (dx > 8 || dy > 8) touchMoved.current = true
+  }
+
   const onTouchEnd = (e: React.TouchEvent) => {
-    const dx = e.changedTouches[0].clientX - touchStartX.current
-    const dy = e.changedTouches[0].clientY - touchStartY.current
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+    const dx       = e.changedTouches[0].clientX - touchStartX.current
+    const dy       = e.changedTouches[0].clientY - touchStartY.current
+    const elapsed  = Date.now() - touchStartTime.current
+    const absDx    = Math.abs(dx)
+    const absDy    = Math.abs(dy)
+
+    if (absDx > absDy && absDx > 50) {
+      // Horizontal swipe
+      touchMoved.current = true
       dx < 0 ? goTo(index + 1) : goTo(index - 1)
-    } else if (Math.abs(dy) < 10 && Math.abs(dx) < 10) {
+    } else if (!touchMoved.current && elapsed < 400) {
+      // Clean tap — flip the card
       flip()
     }
+  }
+
+  // On mobile, touch events fire before click. We suppress the synthetic click
+  // when a touch gesture was already handled to avoid double-flip.
+  const onCardClick = (e: React.MouseEvent) => {
+    if (touchMoved.current) return
+    // Only fire on non-touch (mouse) clicks
+    if ((e.nativeEvent as PointerEvent).pointerType === 'touch') return
+    flip()
   }
 
   if (!card) return (
@@ -199,8 +227,9 @@ function StudyInner() {
         <div
           key={animKey}
           className="study-card-scene slide-in"
-          onClick={flip}
+          onClick={onCardClick}
           onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
           <div className={`study-card-inner ${flipped ? 'flipped' : ''}`}>

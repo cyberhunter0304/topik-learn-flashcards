@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { romanize } from '@/lib/romanize'
 import vocab from '@/data/vocab.json'
 
@@ -23,7 +23,6 @@ const API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_KEY ?? ''
 
 function koreanToRoman(text: string): string {
   return text.split(' ').map(word => {
-    // Separate trailing punctuation so it doesn't get a stray dash
     const match = word.match(/^(.*?)([.?!,。]+)?$/)
     const core  = match?.[1] ?? word
     const punct = match?.[2] ?? ''
@@ -37,14 +36,22 @@ function koreanToRoman(text: string): string {
 }
 
 export default function BeeAssist({ korean, english }: BeeAssistProps) {
-  const [open, setOpen]       = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [insight, setInsight] = useState<Insight | null>(null)
-  const [error, setError]     = useState<string | null>(null)
+  const [open, setOpen]         = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [insight, setInsight]   = useState<Insight | null>(null)
+  const [error, setError]       = useState<string | null>(null)
   const [prompted, setPrompted] = useState(false)
-  const panelRef              = useRef<HTMLDivElement>(null)
 
   const cacheKey = korean
+
+  // Reset state when the card changes
+  useEffect(() => {
+    setOpen(false)
+    setPrompted(false)
+    setInsight(null)
+    setError(null)
+    setLoading(false)
+  }, [korean])
 
   async function fetchInsight() {
     if (cache[cacheKey]) { setInsight(cache[cacheKey]); setOpen(true); return }
@@ -64,27 +71,7 @@ export default function BeeAssist({ korean, english }: BeeAssistProps) {
           messages: [
             {
               role: 'system',
-              content: `You are Bee, a friendly Korean language tutor for native English speakers who are learning Korean from scratch.
-Respond ONLY in raw JSON (no markdown fences) with this exact structure:
-{
-  "examples": [
-    { "korean": "...", "english": "..." },
-    { "korean": "...", "english": "..." }
-  ],
-  "breakdown": { "meaning": "..." },
-  "pitfall": "...",
-  "related": [
-    { "korean": "...", "english": "..." },
-    { "korean": "...", "english": "..." },
-    { "korean": "...", "english": "..." }
-  ]
-}
-Rules:
-- examples: 2 short, natural sentences using the word. Korean script only in the "korean" field, plain English in "english".
-- breakdown: interesting facts about the word — hanja origin, how it was formed, nuance vs similar words, or cultural context. 1-2 sentences in "meaning".
-- pitfall: one common mistake English speakers make with this word (1 sentence).
-- related: 3 related Korean words that are commonly used. Korean script only in "korean", English meaning in "english". Prefer common everyday words.
-Do NOT include romanization — that will be added automatically.`
+              content: `You are Bee, a friendly Korean language tutor for native English speakers who are learning Korean from scratch.\nRespond ONLY in raw JSON (no markdown fences) with this exact structure:\n{\n  \"examples\": [\n    { \"korean\": \"...\", \"english\": \"...\" },\n    { \"korean\": \"...\", \"english\": \"...\" }\n  ],\n  \"breakdown\": { \"meaning\": \"...\" },\n  \"pitfall\": \"...\",\n  \"related\": [\n    { \"korean\": \"...\", \"english\": \"...\" },\n    { \"korean\": \"...\", \"english\": \"...\" },\n    { \"korean\": \"...\", \"english\": \"...\" }\n  ]\n}\nRules:\n- examples: 2 short, natural sentences using the word. Korean script only in the \"korean\" field, plain English in \"english\".\n- breakdown: interesting facts about the word — hanja origin, how it was formed, nuance vs similar words, or cultural context. 1-2 sentences in \"meaning\".\n- pitfall: one common mistake English speakers make with this word (1 sentence).\n- related: 3 related Korean words that are commonly used. Korean script only in \"korean\", English meaning in \"english\". Prefer common everyday words.\nDo NOT include romanization — that will be added automatically.`
             },
             { role: 'user', content: `Korean word: ${korean}\nEnglish meaning: ${english}` }
           ]
@@ -101,7 +88,6 @@ Do NOT include romanization — that will be added automatically.`
       const clean = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim()
       const parsed = JSON.parse(clean)
 
-      // Inject romanization client-side
       const result: Insight = {
         examples: parsed.examples.map((ex: { korean: string; english: string }) => ({
           korean: ex.korean,
@@ -130,54 +116,70 @@ Do NOT include romanization — that will be added automatically.`
     }
   }
 
-
-  function handleBeeClick(e: React.MouseEvent) {
+  function handleBeeClick(e: React.MouseEvent | React.TouchEvent) {
     e.stopPropagation()
+    e.preventDefault()
     if (!prompted && !open) setPrompted(true)
   }
 
-  function handleYes(e: React.MouseEvent) {
+  function handleYes(e: React.MouseEvent | React.TouchEvent) {
     e.stopPropagation()
+    e.preventDefault()
     setPrompted(false)
     fetchInsight()
   }
 
-  function handleClose(e: React.MouseEvent) {
+  function handleClose(e: React.MouseEvent | React.TouchEvent) {
     e.stopPropagation()
+    e.preventDefault()
     setOpen(false)
     setPrompted(false)
   }
 
   return (
-    <div className="bee-assist-wrap" onClick={e => e.stopPropagation()}>
-
-      <button
-        className={`bee-btn ${prompted || open ? 'bee-btn--active' : ''}`}
-        onClick={handleBeeClick}
-        aria-label="Ask Bee for insights"
+    <>
+      {/* Bee button — rendered as a fixed overlay so it never clips inside the card */}
+      <div
+        className="bee-assist-wrap"
+        onClick={e => e.stopPropagation()}
+        onTouchEnd={e => e.stopPropagation()}
       >
-        <img src="/bee.png" alt="Bee" className="bee-img" />
-      </button>
+        <button
+          className={`bee-btn ${prompted || open ? 'bee-btn--active' : ''}`}
+          onClick={handleBeeClick}
+          onTouchEnd={handleBeeClick}
+          aria-label="Ask Bee for insights"
+        >
+          <img src="/bee.png" alt="Bee" className="bee-img" />
+        </button>
 
-      {prompted && !open && (
-        <div className="bee-bubble">
-          <p className="bee-bubble-text">Wanna know more about this word, bee?</p>
-          <div className="bee-bubble-actions">
-            <button className="bee-bubble-yes" onClick={handleYes}>Yes please!</button>
-            <button className="bee-bubble-no" onClick={e => { e.stopPropagation(); setPrompted(false) }}>Maybe later</button>
+        {prompted && !open && (
+          <div className="bee-bubble">
+            <p className="bee-bubble-text">Wanna know more about this word, bee?</p>
+            <div className="bee-bubble-actions">
+              <button className="bee-bubble-yes" onClick={handleYes} onTouchEnd={handleYes}>Yes please!</button>
+              <button className="bee-bubble-no" onClick={e => { e.stopPropagation(); setPrompted(false) }} onTouchEnd={e => { e.stopPropagation(); setPrompted(false) }}>Maybe later</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Panel — always rendered in a portal-like fixed overlay, never inside the card DOM */}
       {open && (
-        <div className="bee-panel" ref={panelRef} onClick={e => e.stopPropagation()}>
+        <div
+          className="bee-panel"
+          onClick={e => e.stopPropagation()}
+          onTouchStart={e => e.stopPropagation()}
+          onTouchMove={e => e.stopPropagation()}
+          onTouchEnd={e => e.stopPropagation()}
+        >
           <div className="bee-panel-header">
             <img src="/bee.png" alt="Bee" className="bee-panel-img" />
             <div>
               <span className="bee-panel-title">Bee&apos;s Word Insights</span>
               <span className="bee-panel-word">{korean} · {koreanToRoman(korean)} · {english}</span>
             </div>
-            <button className="bee-panel-close" onClick={handleClose}>✕</button>
+            <button className="bee-panel-close" onClick={handleClose} onTouchEnd={handleClose}>✕</button>
           </div>
 
           {loading && (
@@ -197,7 +199,6 @@ Do NOT include romanization — that will be added automatically.`
           {insight && !loading && (
             <div className="bee-content">
 
-              {/* Example sentences */}
               <section className="bee-section">
                 <h4 className="bee-section-title">✦ Example sentences</h4>
                 {insight.examples.map((ex, i) => (
@@ -209,27 +210,21 @@ Do NOT include romanization — that will be added automatically.`
                 ))}
               </section>
 
-              {/* Word breakdown */}
               <section className="bee-section">
                 <h4 className="bee-section-title">✦ Word breakdown</h4>
                 <p className="bee-section-body">{insight.breakdown.meaning}</p>
               </section>
 
-              {/* Watch out */}
               <section className="bee-section">
                 <h4 className="bee-section-title">✦ Watch out!</h4>
                 <p className="bee-section-body bee-pitfall">{insight.pitfall}</p>
               </section>
 
-              {/* Related words — clickable */}
               <section className="bee-section">
                 <h4 className="bee-section-title">✦ Related words</h4>
                 <div className="bee-related">
                   {insight.related.map((w, i) => (
-                    <div
-                      key={i}
-                      className="bee-related-chip"
-                    >
+                    <div key={i} className="bee-related-chip">
                       <span className="bee-related-korean">{w.korean}</span>
                       <span className="bee-related-sep">·</span>
                       <span className="bee-related-roman">{w.romanized}</span>
@@ -244,6 +239,6 @@ Do NOT include romanization — that will be added automatically.`
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }
